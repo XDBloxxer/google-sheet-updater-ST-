@@ -2,8 +2,11 @@ import os
 import json
 import gspread
 from google.oauth2.service_account import Credentials
-import requests
-from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.common.by import By
+import time
 
 # Google Sheets credentials
 SCOPE = [
@@ -32,39 +35,33 @@ sheet = client.open(SPREADSHEET_NAME).worksheet("Trending Stocks")
 # Stocktwits trending page URL
 url = "https://stocktwits.com/top_stocks"
 
-# Set headers to avoid being blocked
-headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-}
+# Set up Selenium WebDriver (Chrome in this case)
+driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
 
-# Send GET request to the Stocktwits page
-response = requests.get(url, headers=headers)
+# Visit the StockTwits trending page
+driver.get(url)
 
-# Check if the response is successful (status code 200)
-if response.status_code == 200:
-    # Parse the page using BeautifulSoup
-    soup = BeautifulSoup(response.content, 'html.parser')
+# Wait for the page to fully load
+time.sleep(5)  # Adjust sleep time based on your internet speed
 
-    # Debugging: Print the raw HTML to verify the structure
-    print("Raw HTML content:")
-    print(soup.prettify()[:1000])  # Print first 1000 characters for inspection
+# Find all the stock symbols (adjust the selector based on the page structure)
+# Inspect the page to get the right class or HTML structure for the stock symbols
+elements = driver.find_elements(By.CSS_SELECTOR, ".symbol")  # Adjust CSS selector accordingly
 
-    # Find all the stock symbols (You may need to update this based on the HTML structure)
-    trending_stocks = []
-    for div in soup.find_all("div", {"class": "symbol"}):
-        symbol = div.get_text().strip()  # Extract the symbol text
-        trending_stocks.append(symbol)
+# Extract stock symbols
+trending_stocks = [element.text for element in elements]
 
-    # Debugging: Print out the list of trending stocks
-    print("Trending Stocks Extracted:")
-    print(trending_stocks)
+# Debugging: Print out the list of trending stocks
+print("Trending Stocks Extracted:")
+print(trending_stocks)
 
-    # If there are trending stocks, update the Google Sheet
-    if trending_stocks:
-        for i, symbol in enumerate(trending_stocks, start=2):  # Start at row 2 to avoid overwriting headers
-            sheet.update_cell(i, 1, symbol)  # Update the first column with stock symbols
-        print(f"Updated {len(trending_stocks)} stocks to Google Sheets.")
-    else:
-        print("No trending stocks found.")
+# If there are trending stocks, update the Google Sheet
+if trending_stocks:
+    for i, symbol in enumerate(trending_stocks, start=2):  # Start at row 2 to avoid overwriting headers
+        sheet.update_cell(i, 1, symbol)  # Update the first column with stock symbols
+    print(f"Updated {len(trending_stocks)} stocks to Google Sheets.")
 else:
-    print(f"Failed to fetch data: {response.status_code}")
+    print("No trending stocks found.")
+
+# Close the browser after the task is complete
+driver.quit()

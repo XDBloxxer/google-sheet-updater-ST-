@@ -45,18 +45,26 @@ if response.status_code == 200:
     # Parse the page using BeautifulSoup
     soup = BeautifulSoup(response.content, 'html.parser')
 
+    # Debugging: Print the raw HTML to verify the structure
+    print("Raw HTML content:")
+    print(soup.prettify()[:1000])  # Print first 1000 characters for inspection
+
     # Find all the stock symbols (You may need to update this based on the HTML structure)
     trending_stocks = []
     for div in soup.find_all("div", {"class": "symbol"}):
         symbol = div.get_text().strip()  # Extract the symbol text
         trending_stocks.append(symbol)
 
-    # Print the trending stocks (for debugging)
-    print("Trending Stocks:", trending_stocks)
+    # Debugging: Print out the list of trending stocks
+    print("Trending Stocks Extracted:")
+    print(trending_stocks)
 
-    # Update the Google Sheet with the trending stock symbols
-    for i, symbol in enumerate(trending_stocks, start=2):  # Start at row 2 to avoid overwriting headers
-        sheet.update_cell(i, 1, symbol)  # Update the first column with stock symbols
-
+    # If there are trending stocks, update the Google Sheet
+    if trending_stocks:
+        for i, symbol in enumerate(trending_stocks, start=2):  # Start at row 2 to avoid overwriting headers
+            sheet.update_cell(i, 1, symbol)  # Update the first column with stock symbols
+        print(f"Updated {len(trending_stocks)} stocks to Google Sheets.")
+    else:
+        print("No trending stocks found.")
 else:
     print(f"Failed to fetch data: {response.status_code}")

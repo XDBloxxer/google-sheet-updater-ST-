@@ -2,11 +2,23 @@ import os
 import json
 import gspread
 from google.oauth2.service_account import Credentials
+from selenium.webdriver.chrome.options import Options
 from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 import time
+
+# Set Chrome options for headless mode
+chrome_options = Options()
+chrome_options.add_argument("--headless")  # Ensure it's headless
+chrome_options.add_argument("--no-sandbox")  # Prevents issues in CI environments
+chrome_options.add_argument("--disable-dev-shm-usage")  # Prevents issues with shared memory
+chrome_options.add_argument("--remote-debugging-port=9222")  # Ensure debugging is enabled
+
+# Set up WebDriver
+driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
+
 
 # Google Sheets credentials
 SCOPE = [

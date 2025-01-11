@@ -1,11 +1,11 @@
 import os
 import json
-import requests
 import gspread
 from google.oauth2.service_account import Credentials
-import time
+import requests
+from bs4 import BeautifulSoup
 
-# Set up Google Sheets API credentials
+# Google Sheets credentials
 SCOPE = [
     "https://spreadsheets.google.com/feeds",
     "https://www.googleapis.com/auth/spreadsheets",
@@ -29,51 +29,34 @@ client = gspread.authorize(creds)
 SPREADSHEET_NAME = 'Flux Capacitor'
 sheet = client.open(SPREADSHEET_NAME).worksheet("Trending Stocks")
 
-# Constants
-STOCKTWITS_API_URL = "https://api.stocktwits.com/api/2/streams/trending.json"
+# Stocktwits trending page URL
+url = "https://stocktwits.com/top_stocks"
 
-def fetch_trending_stocks():
-    """Fetch trending stocks from Stocktwits API."""
-    response = requests.get(STOCKTWITS_API_URL)
-    response.raise_for_status()  # Raise an error for bad status codes
-    data = response.json()
-    
-    trending = []
-    for message in data.get("messages", []):
-        symbol_info = message.get("symbol", {})
-        trending.append([
-            symbol_info.get("symbol", "-"),
-            symbol_info.get("title", "-"),
-            message.get("created_at", "-"),
-        ])
-    return trending
+# Set headers to avoid being blocked
+headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+}
 
-def update_google_sheet(data):
-    """Update Google Sheet with trending stocks."""
-    # Add headers
-    headers = [["Symbol", "Title", "Created At"]]
-    data = headers + data
+# Send GET request to the Stocktwits page
+response = requests.get(url, headers=headers)
 
-    # Update Google Sheet (starting from A1)
-    sheet.clear()  # Clear the sheet before updating
-    sheet.update("A1", data)  # Update with new data
+# Check if the response is successful (status code 200)
+if response.status_code == 200:
+    # Parse the page using BeautifulSoup
+    soup = BeautifulSoup(response.content, 'html.parser')
 
-def main():
-    while True:
-        try:
-            # Fetch trending stocks
-            print("Fetching trending stocks...")
-            trending_stocks = fetch_trending_stocks()
+    # Find all the stock symbols (You may need to update this based on the HTML structure)
+    trending_stocks = []
+    for div in soup.find_all("div", {"class": "symbol"}):
+        symbol = div.get_text().strip()  # Extract the symbol text
+        trending_stocks.append(symbol)
 
-            # Update Google Sheet
-            print("Updating Google Sheet...")
-            update_google_sheet(trending_stocks)
+    # Print the trending stocks (for debugging)
+    print("Trending Stocks:", trending_stocks)
 
-            print("Update completed. Waiting for the next update...")
-            time.sleep(3600)  # Run every hour
-        except Exception as e:
-            print(f"An error occurred: {e}")
-            time.sleep(60)  # Wait before retrying
+    # Update the Google Sheet with the trending stock symbols
+    for i, symbol in enumerate(trending_stocks, start=2):  # Start at row 2 to avoid overwriting headers
+        sheet.update_cell(i, 1, symbol)  # Update the first column with stock symbols
 
-if __name__ == "__main__":
-    main()
+else:
+    print(f"Failed to fetch data: {response.status_code}")

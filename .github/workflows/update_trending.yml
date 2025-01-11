@@ -16,7 +16,7 @@ jobs:
         with:
           python-version: "3.12"
           
-      - name: Install dependencies
+      - name: Install required packages for headless chrome
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -28,15 +28,13 @@ jobs:
             libgdk-pixbuf2.0-0 \
             libnss3 \
             libgbm1 \
-            libasound2 \
             libatk-bridge2.0-0 \
             libatk1.0-0 \
             libx11-xcb1 \
             libsecret-1-0 \
             libxcomposite1 \
-            libxrandr2
-
-
+            libxrandr2 \
+            libasound2
 
       - name: Install dependencies
         run: |

@@ -161,7 +161,7 @@ def populate_google_sheet(trending_stocks):
 # Main function to handle scraping and Google Sheets update
 def main():
     # Get trending stocks data
-    trending_stocks = get_trending_stocks()
+    trending_stocks = extract()
 
     # Populate Google Sheets with trending stocks data
     if trending_stocks:

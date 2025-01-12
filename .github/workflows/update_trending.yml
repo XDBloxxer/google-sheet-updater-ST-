@@ -3,8 +3,10 @@ name: Scrape StockTwits and Update Google Sheets
 on:
   push:
     branches:
-      - main
-  workflow_dispatch: # Allows manual trigger
+      - main  # Trigger when code is pushed to main branch
+  workflow_dispatch:  # Manually trigger the workflow
+  schedule:
+    - cron: '0 */1 * * *'  # Re-trigger every 1 hours (if it times out or finishes)
 
 jobs:
   scrape_and_update_sheets:

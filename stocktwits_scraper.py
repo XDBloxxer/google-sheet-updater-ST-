@@ -1,7 +1,6 @@
 import os
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 
 def configure_driver():
@@ -10,7 +9,7 @@ def configure_driver():
     options.add_argument('--no-sandbox')  # Sometimes required for CI/CD systems
     options.add_argument('--disable-dev-shm-usage')  # Fixes some issues on CI/CD
 
-    chromedriver_path = os.getenv('CHROMEDRIVER_PATH', '/usr/lib/chromium-browser/chromedriver')  # Ensure this points to the correct path
+    chromedriver_path = os.getenv('CHROMEDRIVER_PATH', '/usr/bin/chromedriver')  # Ensure this points to the correct path
     service = Service(chromedriver_path)
 
     # Pass the driver path to the webdriver

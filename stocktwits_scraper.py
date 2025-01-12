@@ -27,20 +27,23 @@ def update_google_sheet(data):
         credentials = get_google_credentials()
         service = build('sheets', 'v4', credentials=credentials)
         
-        spreadsheet_id = "1u7ixhoxCwYo-mUm0mod62Rt-IMBTSX4SOhZbIpQ0Tbw"  # You'll need to replace this with your actual spreadsheet ID
-        range_name = "Trending Stocks!A1"  # Starting from A1 in the "Trending Stocks" sheet
+        spreadsheet_id = "1u7ixhoxCwYo-mUm0mod62Rt-IMBTSX4SOhZbIpQ0Tbw"  # Replace with your actual spreadsheet ID
+        range_name = "Trending Stocks!A1"
         
         # Prepare the data for Google Sheets
         # First row is headers
-        values = [["Symbol", "Company Name", "Date Updated"]]
+        values = [["Symbol", "Company Name", "Rank"]]
         
-        # Add data rows
-        if "data" in data:  # For trending stocks API response
-            for item in data["data"]:
+        # Add data rows - print the data structure to debug
+        print("Data structure received:", json.dumps(data, indent=2))
+        
+        # Process the rankings data
+        if "rankings" in data:
+            for item in data["rankings"]:
                 values.append([
                     item.get("symbol", ""),
-                    item.get("title", ""),
-                    datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    item.get("name", ""),
+                    str(item.get("rank", ""))
                 ])
         
         body = {
@@ -76,6 +79,9 @@ def extract():
     
     if response.status_code == 200:
         data = response.json()
+        
+        # Print the structure of the response for debugging
+        print("API Response structure:", json.dumps(data, indent=2)[:500])  # Print first 500 chars
         
         # Save to local JSON file
         with open("trending.json", "w") as jsonFile:

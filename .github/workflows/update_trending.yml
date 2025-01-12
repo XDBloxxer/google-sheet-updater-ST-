@@ -24,11 +24,11 @@ jobs:
     - name: Install Chrome
       run: |
         sudo apt-get update
-        sudo apt-get install -y google-chrome-stable
+        sudo apt-get install -y chromium-browser chromium-chromedriver
   
-    - name: Install ChromeDriver
+    - name: Create symbolic link for chromedriver
       run: |
-        sudo apt-get install -y chromium-chromedriver
+        sudo rm -f /usr/bin/chromedriver
         sudo ln -s /usr/lib/chromium-browser/chromedriver /usr/bin/chromedriver
   
     - name: Run StockTwits Scraper

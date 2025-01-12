@@ -32,18 +32,20 @@ def update_google_sheet(data):
         
         # Prepare the data for Google Sheets
         # First row is headers
-        values = [["Symbol", "Company Name", "Rank"]]
+        values = [["Rank", "Symbol", "Company Name", "Price", "Price Change %", "Watchers"]]
         
-        # Add data rows - print the data structure to debug
-        print("Data structure received:", json.dumps(data, indent=2))
-        
-        # Process the rankings data
-        if "rankings" in data:
-            for item in data["rankings"]:
+        # Add data rows
+        if "response" in data and "ranks" in data["response"]:
+            for rank_data in data["response"]["ranks"]:
+                stock = rank_data.get("stock", {})
+                pricing = rank_data.get("pricing", {})
                 values.append([
-                    item.get("symbol", ""),
-                    item.get("name", ""),
-                    str(item.get("rank", ""))
+                    rank_data.get("rank", ""),
+                    stock.get("symbol", ""),
+                    stock.get("name", ""),
+                    pricing.get("price", ""),
+                    pricing.get("percentage_price_change", ""),
+                    rank_data.get("watcher_count", "")
                 ])
         
         body = {
@@ -53,7 +55,7 @@ def update_google_sheet(data):
         # Clear existing content and update with new data
         service.spreadsheets().values().clear(
             spreadsheetId=spreadsheet_id,
-            range="Trending Stocks!A:C"
+            range="Trending Stocks!A:F"
         ).execute()
         
         result = service.spreadsheets().values().update(
@@ -79,9 +81,6 @@ def extract():
     
     if response.status_code == 200:
         data = response.json()
-        
-        # Print the structure of the response for debugging
-        print("API Response structure:", json.dumps(data, indent=2)[:500])  # Print first 500 chars
         
         # Save to local JSON file
         with open("trending.json", "w") as jsonFile:

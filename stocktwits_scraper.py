@@ -1,100 +1,71 @@
 import os
-import requests
-from bs4 import BeautifulSoup
+import time
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
-import time
+from bs4 import BeautifulSoup
 
-
+# Function to configure the Selenium WebDriver with necessary options
 def configure_driver():
     options = Options()
-    options.add_argument('--headless')  # Running in headless mode, no UI
-    options.add_argument('--no-sandbox')  # Sometimes required for CI/CD systems
-    options.add_argument('--disable-dev-shm-usage')  # Fixes some issues on CI/CD
-
-    chromedriver_path = os.getenv('CHROMEDRIVER_PATH', '/usr/bin/chromedriver')  # Ensure this points to the correct path
-    service = Service(chromedriver_path)
-
-    # Pass the driver path to the webdriver
-    driver = webdriver.Chrome(service=service, options=options)
+    options.add_argument('--headless')  # Headless mode (no GUI)
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
     
+    chrome_bin = os.getenv("CHROME_BIN")
+    chromedriver_path = os.getenv("CHROMEDRIVER_PATH")
+    
+    if not chrome_bin or not chromedriver_path:
+        raise EnvironmentError("Chromium or Chromedriver paths are not set.")
+    
+    # Set the path to chromedriver
+    service = Service(executable_path=chromedriver_path)
+    
+    # Initialize the WebDriver
+    driver = webdriver.Chrome(service=service, options=options)
     return driver
 
+# Function to scrape trending stocks from StockTwits
 def scrape_trending_stocks():
-    driver = configure_driver()
-    driver.get("https://stocktwits.com/sentiment")
-
-    try:
-        driver.implicitly_wait(10)
-        html_content = driver.page_source
-        soup = BeautifulSoup(html_content, "html.parser")
-        stocks = []
-
-        stock_elements = soup.find_all("div", class_="st_3hZTfnrS st_3aQjLDgp")
-        for element in stock_elements:
-            stock_symbol = element.find("span", class_="st_FXUdnqkF").text
-            sentiment = element.find("div", class_="st_3czg6OJD").text.strip() if element.find("div", class_="st_3czg6OJD") else "N/A"
-            stocks.append({
-                "symbol": stock_symbol,
-                "sentiment": sentiment
-            })
-
-        driver.quit()
-        return stocks
-
-    except Exception as e:
-        print(f"Error: {e}")
-        driver.quit()
-        return []
-
-def scrape_earnings():
-    url = "https://stocktwits.com/markets/calendar"
-    driver = configure_driver()
-    driver.get(url)
-
-    try:
-        driver.implicitly_wait(10)
-        html_content = driver.page_source
-        soup = BeautifulSoup(html_content, "html.parser")
-        earnings = []
-
-        earnings_elements = soup.find_all("div", class_="earnings-class-name")
-        for element in earnings_elements:
-            company = element.find("span", class_="company-class-name").text
-            date = element.find("span", class_="date-class-name").text.strip() if element.find("span", class_="date-class-name") else "N/A"
-            earnings.append({
-                "company": company,
-                "date": date
-            })
-
-        driver.quit()
-        return earnings
-
-    except Exception as e:
-        print(f"Error: {e}")
-        driver.quit()
-        return []
-
-import sys
-
-def main():
-    print("Script is starting.")
-    # Check if the argument is correct
-    if len(sys.argv) < 2:
-        print("Error: Please provide a valid argument.")
-        return
-    print(f"Argument passed: {sys.argv[1]}")
+    print("Scraping trending stocks...")
     
-    if sys.argv[1] == "1":
-        print("Scraping trending stocks...")
-        # Call the function for scraping trending stocks
-        scrape_trending_stocks()
+    driver = configure_driver()
+    driver.get("https://stocktwits.com/")
+    
+    # Allow page to load
+    time.sleep(3)
+    
+    # Get the page source after it's fully loaded
+    soup = BeautifulSoup(driver.page_source, 'html.parser')
+    
+    # Find all trending stocks (you may need to adjust this part based on StockTwits structure)
+    trending_stocks = []
+    stock_elements = soup.find_all('a', {'class': 'trending-stocks__ticker'})  # Adjust class or tag based on actual structure
+    
+    for element in stock_elements:
+        stock_symbol = element.text.strip()
+        trending_stocks.append(stock_symbol)
+    
+    driver.quit()
+    
+    if trending_stocks:
+        print("Trending Stocks Found:")
+        for stock in trending_stocks:
+            print(stock)
     else:
-        print("Invalid argument. Please pass 1.")
-    
-    print("Script has finished.")
+        print("No trending stocks found.")
 
+# Main function to run the script
+def main():
+    if len(os.sys.argv) > 1:
+        argument = os.sys.argv[1]
+        print(f"Argument passed: {argument}")
+    else:
+        print("No argument passed.")
+    
+    scrape_trending_stocks()
+
+# Run the main function if the script is executed
 if __name__ == "__main__":
     main()

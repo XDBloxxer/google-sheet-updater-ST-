@@ -31,49 +31,6 @@ client = gspread.authorize(creds)
 SPREADSHEET_NAME = 'Flux Capacitor'
 sheet = client.open(SPREADSHEET_NAME).worksheet("Trending Stocks")
 
-# Function to scrape earnings data
-def earnings():
-    # Set up headless Chrome to avoid opening the browser window
-    options = webdriver.ChromeOptions()
-    options.add_argument("--headless")
-    
-    # Launch Chrome with the options
-    chrome = webdriver.Chrome(options=options)
-
-    # Go to the earnings calendar page
-    chrome.get("https://stocktwits.com/rankings")
-    
-    # Get the page source (HTML content)
-    htmlContent = chrome.page_source
-
-    # Parse the page with BeautifulSoup
-    soup = BeautifulSoup(htmlContent, "html.parser")
-
-    # Find all earnings rows
-    earnings = soup.find_all("div", {"role": "row"})
-    companyEarnings = []
-
-    # Iterate through the earnings data, skipping the header row
-    for earning in earnings[1:]:
-        company = earning.find_all("p")
-        symbol = company[0].text
-        name = company[1].text
-        price = earning.find("div", {"class": "EarningsTable_priceCell__Sxx1_"}).text
-
-        # Append the extracted data to the list
-        companyEarnings.append({
-            "Symbol": symbol,
-            "Company Name": name,
-            "Price": price
-        })
-
-    # Save the earnings data as a JSON file
-    with open("earnings.json", "w") as earningsFile:
-        json.dump(companyEarnings, earningsFile, indent=4, ensure_ascii=False)
-
-    # Close the Chrome browser instance
-    chrome.quit()
-
 # Function to extract data based on user input
 def extract():
     # Directly setting query value (no input needed)
@@ -84,7 +41,7 @@ def extract():
     trending_stocks = []  # Initialize an empty list to store trending stocks data
     
     if query == "4":
-        earnings()
+        earnings()  # This is not relevant for trending stocks
     elif query == "0":
         return trending_stocks
     else:
@@ -104,6 +61,7 @@ def extract():
         print(f"Fetching data from {url}...")
         response = requests.get(url, headers=headers)
         
+        # Debugging response
         if response.status_code == 200:
             print(f"Successfully fetched data for {name}.")
             responseJson = response.json()
@@ -119,6 +77,9 @@ def extract():
                         "symbol": stock.get("symbol", "N/A"),
                         "name": stock.get("name", "N/A")
                     })
+
+            # Debugging: Check if we have any trending stocks
+            print(f"Trending stocks data: {trending_stocks}")
                 
             # Save the response JSON to a file
             with open(f"{name}.json", "w") as jsonFile:
@@ -132,8 +93,10 @@ def extract():
 # Function to populate Google Sheets with trending stocks
 def populate_google_sheet(trending_stocks):
     if not trending_stocks:
-        print("No data to populate.")
+        print("No data to populate in the Google Sheet.")
         return
+    
+    print("Populating Google Sheet with trending stocks...")
     
     # Prepare the data to insert
     sheet_data = []
@@ -141,13 +104,20 @@ def populate_google_sheet(trending_stocks):
         symbol = stock.get('symbol', 'N/A')  # Use 'N/A' if symbol is missing
         name = stock.get('name', 'N/A')      # Use 'N/A' if name is missing
         sheet_data.append([symbol, name])
+
+    # Debugging: Print data to check
+    print(f"Sheet data to insert: {sheet_data}")
     
-    # Write the data to the sheet, starting from row 2 (to keep headers intact)
-    sheet.insert_rows(sheet_data, row=2)
-    print(f"Populated 'Trending Stocks' sheet with {len(sheet_data)} entries.")
+    try:
+        # Write the data to the sheet, starting from row 2 (to keep headers intact)
+        sheet.insert_rows(sheet_data, row=2)
+        print(f"Populated 'Trending Stocks' sheet with {len(sheet_data)} entries.")
+    except Exception as e:
+        print(f"Error occurred while populating the Google Sheet: {e}")
 
 # Main function to handle scraping and Google Sheets update
 def main():
+    print("Starting the main process...")
     # Get trending stocks data
     trending_stocks = extract()
 

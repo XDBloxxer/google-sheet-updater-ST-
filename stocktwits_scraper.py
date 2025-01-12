@@ -81,7 +81,7 @@ def extract():
             json.dump(responseJson, jsonFile, indent=4)
 
     # Ask if the user wants to continue
-    more = input("Do you want to continue? (yes/no): ")
+    more = "no"
     if more.lower() == "yes":
         extract()
     else:

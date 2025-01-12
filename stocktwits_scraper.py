@@ -79,13 +79,13 @@ def extract():
                     })
 
             # Debugging: Check if we have any trending stocks
-            #print(f"Trending stocks data: {trending_stocks}")
+            print(f"Trending stocks data: {trending_stocks}")
                 
             # Save the response JSON to a file
-            with open(f"{name}.json", "w") as jsonFile:
+            #with open(f"{name}.json", "w") as jsonFile:
                 json.dump(responseJson, jsonFile, indent=4)
                 print(f"Saved data to {name}.json")
-        else:
+        #else:
             print(f"Failed to fetch data for {name}, status code: {response.status_code}")
     
     return trending_stocks  # Return the trending stocks data

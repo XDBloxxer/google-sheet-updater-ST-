@@ -71,27 +71,41 @@ def update_google_sheet(data):
         return False
 
 def extract():
-    url = "https://api-gw-prd.stocktwits.com/rankings/api/v1/rankings?identifier=ALL&identifier-type=exchange-set&limit=100&page-num=2&type=ts"
+    print("Fetching all trending stocks...")
+    base_url = (
+        "https://api-gw-prd.stocktwits.com/rankings/api/v1/rankings?"
+        "identifier=ALL&identifier-type=exchange-set&limit=100&page-num={page}&type=ts"
+    )
     headers = {"User-Agent": "Mozilla/5.0"}
-    
-    print("Fetching trending stocks data...")
-    response = requests.get(url, headers=headers)
-    
-    if response.status_code == 200:
-        data = response.json()
+
+    all_trending_stocks = []
+    page = 1  # Start with the first page
+
+    while True:
+        print(f"Fetching page {page}...")
+        response = requests.get(base_url.format(page=page), headers=headers)
         
-        # Save to local JSON file
-        with open("trending.json", "w") as jsonFile:
-            json.dump(data, jsonFile, indent=4)
-            print("Saved data to trending.json")
-        
-        # Update Google Sheet
-        if update_google_sheet(data):
-            print("Successfully updated Google Sheet 'Flux Capacitor'")
-        else:
-            print("Failed to update Google Sheet")
-    else:
-        print(f"Failed to fetch data, status code: {response.status_code}")
+        if response.status_code != 200:
+            print(f"Failed to fetch data from page {page}, status code: {response.status_code}")
+            break
+
+        try:
+            response_json = response.json()
+            rows = response_json.get("data", {}).get("rows", [])
+            if not rows:
+                print(f"No more data on page {page}. Stopping.")
+                break
+            
+            print(f"Fetched {len(rows)} stocks from page {page}.")
+            all_trending_stocks.extend(rows)  # Add the current page's data to the full list
+            page += 1  # Move to the next page
+
+        except Exception as e:
+            print(f"Error parsing JSON response from page {page}: {e}")
+            break
+
+    print(f"Total stocks fetched: {len(all_trending_stocks)}")
+    return all_trending_stocks
 
 if __name__ == "__main__":
     extract()

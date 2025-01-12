@@ -31,8 +31,6 @@ client = gspread.authorize(creds)
 SPREADSHEET_NAME = 'Flux Capacitor'
 sheet = client.open(SPREADSHEET_NAME).worksheet("Trending Stocks")
 
-
-
 # Function to scrape earnings data
 def earnings():
     # Set up headless Chrome to avoid opening the browser window
@@ -77,25 +75,18 @@ def earnings():
     chrome.quit()
 
 # Function to extract data based on user input
-import requests
-import json
-
-def earnings():
-    # Placeholder for earnings scraping logic
-    # For now, we'll just print a message that it's being executed
-    print("Earnings function executed (this would scrape earnings information).")
-    # You can add your scraping logic here for earnings if needed.
-
 def extract():
     # Directly setting query value (no input needed)
     query = "3"  # Example: scrape trending stocks (set manually)
     
     print("Starting the scraping process...")
+
+    trending_stocks = []  # Initialize an empty list to store trending stocks data
     
     if query == "4":
         earnings()
     elif query == "0":
-        return
+        return trending_stocks
     else:
         match int(query):
             case 1:
@@ -121,6 +112,14 @@ def extract():
             print(f"Data for {name}:")
             print(json.dumps(responseJson, indent=4))
 
+            # Extract relevant trending stocks data (modify this based on the API response structure)
+            if 'data' in responseJson:  # Assuming the API response has a 'data' key
+                for stock in responseJson['data']:
+                    trending_stocks.append({
+                        "symbol": stock.get("symbol", "N/A"),
+                        "name": stock.get("name", "N/A")
+                    })
+                
             # Save the response JSON to a file
             with open(f"{name}.json", "w") as jsonFile:
                 json.dump(responseJson, jsonFile, indent=4)
@@ -128,24 +127,13 @@ def extract():
         else:
             print(f"Failed to fetch data for {name}, status code: {response.status_code}")
     
-    # Simulate "Do you want to continue?" prompt, automatically choosing "no"
-    more = "no"  # Simulating that user doesn't want to continue
-
-    if more.lower() == "yes":
-        extract()  # Restart the process
-    else:
-        print("Exiting...")
+    return trending_stocks  # Return the trending stocks data
 
 # Function to populate Google Sheets with trending stocks
 def populate_google_sheet(trending_stocks):
-    # Authenticate with Google Sheets API
-    gc = authenticate_google_sheets()
-    
-    if not gc:
+    if not trending_stocks:
+        print("No data to populate.")
         return
-
-    # Open the Google Sheets file and the 'Trending Stocks' sheet
-    sheet = gc.open("Flux Capacitor").worksheet("Trending Stocks")
     
     # Prepare the data to insert
     sheet_data = []

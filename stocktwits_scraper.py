@@ -1,71 +1,93 @@
-import os
-import time
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.options import Options
+import requests
+import json
 from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 
-# Function to configure the Selenium WebDriver with necessary options
-def configure_driver():
-    options = Options()
-    options.add_argument('--headless')  # Headless mode (no GUI)
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
+# Function to scrape earnings data
+def earnings():
+    # Set up headless Chrome to avoid opening the browser window
+    options = webdriver.ChromeOptions()
+    options.add_argument("--headless")
     
-    chrome_bin = os.getenv("CHROME_BIN")
-    chromedriver_path = os.getenv("CHROMEDRIVER_PATH")
-    
-    if not chrome_bin or not chromedriver_path:
-        raise EnvironmentError("Chromium or Chromedriver paths are not set.")
-    
-    # Set the path to chromedriver
-    service = Service(executable_path=chromedriver_path)
-    
-    # Initialize the WebDriver
-    driver = webdriver.Chrome(service=service, options=options)
-    return driver
+    # Launch Chrome with the options
+    chrome = webdriver.Chrome(options=options)
 
-# Function to scrape trending stocks from StockTwits
-def scrape_trending_stocks():
-    print("Scraping trending stocks...")
+    # Go to the earnings calendar page
+    chrome.get("https://stocktwits.com/markets/calendar")
     
-    driver = configure_driver()
-    driver.get("https://stocktwits.com/")
-    
-    # Allow page to load
-    time.sleep(3)
-    
-    # Get the page source after it's fully loaded
-    soup = BeautifulSoup(driver.page_source, 'html.parser')
-    
-    # Find all trending stocks (you may need to adjust this part based on StockTwits structure)
-    trending_stocks = []
-    stock_elements = soup.find_all('a', {'class': 'Rankings_tabContent__AnwWp py-3 min-h-[675px]'})  # Adjust class or tag based on actual structure
-    
-    for element in stock_elements:
-        stock_symbol = element.text.strip()
-        trending_stocks.append(stock_symbol)
-    
-    driver.quit()
-    
-    if trending_stocks:
-        print("Trending Stocks Found:")
-        for stock in trending_stocks:
-            print(stock)
+    # Get the page source (HTML content)
+    htmlContent = chrome.page_source
+
+    # Parse the page with BeautifulSoup
+    soup = BeautifulSoup(htmlContent, "html.parser")
+
+    # Find all earnings rows
+    earnings = soup.find_all("div", {"role": "row"})
+    companyEarnings = []
+
+    # Iterate through the earnings data, skipping the header row
+    for earning in earnings[1:]:
+        company = earning.find_all("p")
+        symbol = company[0].text
+        name = company[1].text
+        price = earning.find("div", {"class": "EarningsTable_priceCell__Sxx1_"}).text
+
+        # Append the extracted data to the list
+        companyEarnings.append({
+            "Symbol": symbol,
+            "Company Name": name,
+            "Price": price
+        })
+
+    # Save the earnings data as a JSON file
+    with open("earnings.json", "w") as earningsFile:
+        json.dump(companyEarnings, earningsFile, indent=4, ensure_ascii=False)
+
+    # Close the Chrome browser instance
+    chrome.quit()
+
+# Function to extract data based on user input
+def extract():
+    # Ask user what data they want to scrape
+    query = input("What to scrape? \n top-gainers [1]\n top-losers[2]\n trending stocks[3]\n stocks which reported earnings today[4]\n Insert a number (1,2,3, or 4)\n To cancel, enter 0: ")
+
+    # If the user selects earnings, call the earnings() function
+    if query == "4":
+        earnings()
+    elif query == "0":
+        return
     else:
-        print("No trending stocks found.")
+        # Define the URLs for the other options (top gainers, top losers, trending stocks)
+        match int(query):
+            case 1:
+                url = "https://api.stocktwits.com/api/2/symbols/stats/top_gainers.json?regions=US"
+                name = "topGainers"
+            case 2:
+                url = "https://api.stocktwits.com/api/2/symbols/stats/top_losers.json?regions=US"
+                name = "topLosers"
+            case 3:
+                url = "https://api-gw-prd.stocktwits.com/rankings/api/v1/rankings?identifier=US&amp;identifier-type=exchange-set&amp;limit=15&amp;page-num=1&amp;type=ts"
+                name = "trending"
 
-# Main function to run the script
-def main():
-    if len(os.sys.argv) > 1:
-        argument = os.sys.argv[1]
-        print(f"Argument passed: {argument}")
+        # Send a GET request to the selected URL
+        headers = {"User-Agent": "Mozilla/5.0"}
+        response = requests.get(url, headers=headers)
+        
+        # Parse the response as JSON
+        responseJson = json.loads(response.text)
+
+        # Save the data as a JSON file
+        with open(f"{name}.json", "w") as jsonFile:
+            json.dump(responseJson, jsonFile, indent=4)
+
+    # Ask if the user wants to continue
+    more = input("Do you want to continue? (yes/no): ")
+    if more.lower() == "yes":
+        extract()
     else:
-        print("No argument passed.")
-    
-    scrape_trending_stocks()
+        return
 
-# Run the main function if the script is executed
+# Main entry point of the script
 if __name__ == "__main__":
-    main()
+    extract()

@@ -1,31 +1,26 @@
-import sys
-import json
-from bs4 import BeautifulSoup
+import os
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 
 def configure_driver():
-    from selenium import webdriver
-    from selenium.webdriver.chrome.service import Service
-    from selenium.webdriver.chrome.options import Options
-
     options = Options()
-    options.add_argument("--headless")
-    options.add_argument("--disable-gpu")
-    options.add_argument("--no-sandbox")
+    options.add_argument('--headless')  # Running in headless mode, no UI
+    options.add_argument('--no-sandbox')  # Sometimes required for CI/CD systems
+    options.add_argument('--disable-dev-shm-usage')  # Fixes some issues on CI/CD
 
-    # Use the path configured in the workflow
-    driver_service = Service("/usr/bin/chromedriver")
-    driver = webdriver.Chrome(service=driver_service, options=options)
+    chromedriver_path = os.getenv('CHROMEDRIVER_PATH', '/usr/lib/chromium-browser/chromedriver')  # Ensure this points to the correct path
+    service = Service(chromedriver_path)
+
+    # Pass the driver path to the webdriver
+    driver = webdriver.Chrome(service=service, options=options)
+    
     return driver
 
-
 def scrape_trending_stocks():
-    url = "https://stocktwits.com/sentiment"
     driver = configure_driver()
-    driver.get(url)
+    driver.get("https://stocktwits.com/sentiment")
 
     try:
         driver.implicitly_wait(10)
@@ -98,4 +93,4 @@ def main():
         sys.exit(1)
 
 if __name__ == "__main__":
-    main()
+    scrape_trending_stocks()

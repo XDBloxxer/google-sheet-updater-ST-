@@ -3,6 +3,8 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
 import time
 
@@ -16,11 +18,22 @@ def get_trending_stocks():
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
     
     # URL for StockTwits trending page
-    url = "https://stocktwits.com/sentiment"
+    url = "https://stocktwits.com/trending"
     driver.get(url)
     
-    # Give it some time to load (important for dynamically loaded content)
-    time.sleep(5)  # Wait for 5 seconds to ensure the page loads
+    # Wait for a specific element to load (helps with JavaScript rendering)
+    try:
+        # Adjust the waiting strategy based on what element is reliably loaded first
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.CLASS_NAME, "symbol"))
+        )
+    except Exception as e:
+        print(f"Error waiting for page to load: {e}")
+        driver.quit()
+        return []
+    
+    # Give it some extra time in case some additional content loads asynchronously
+    time.sleep(2)
     
     # Get the page source (HTML)
     page_source = driver.page_source
@@ -31,8 +44,7 @@ def get_trending_stocks():
     # Look for the elements that contain trending stock symbols (based on the guide)
     trending_stocks = []
     
-    # Find all elements containing stock symbols
-    # From the page structure, you can find stock symbols inside the 'a' tags with href containing '/symbols/'
+    # Find all elements that are likely to contain stock symbols
     for link in soup.find_all('a', href=True):
         href = link['href']
         if "/symbols/" in href:  # Filter to get only stock symbols

@@ -8,21 +8,28 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
-    
+    - name: Check out repository
+      uses: actions/checkout@v3
+  
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
-        python-version: '3.12'  # Specify the Python version to use
-    
+        python-version: 3.12
+  
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install requests gspread oauth2client beautifulsoup4 selenium webdriver-manager chromedriver-autoinstaller
-
-    - name: Run stocktwits to sheets script
-      env:
-        GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}  # Set up in GitHub secrets
+        pip install selenium beautifulsoup4 requests
+  
+    - name: Install Chrome
       run: |
-        python stocktwits_to_sheets.py 1
+        sudo apt-get update
+        sudo apt-get install -y google-chrome-stable
+  
+    - name: Install ChromeDriver
+      run: |
+        sudo apt-get install -y chromium-chromedriver
+        sudo ln -s /usr/lib/chromium-browser/chromedriver /usr/bin/chromedriver
+  
+    - name: Run StockTwits Scraper
+      run: python stocktwits_scraper.py 1

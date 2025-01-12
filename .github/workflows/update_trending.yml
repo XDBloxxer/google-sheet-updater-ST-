@@ -1,27 +1,30 @@
-name: Update Google Sheet with Stocktwits Trending Stocks
+name: Scrape StockTwits and Update Google Sheets
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch: # Allows manual trigger
 
 jobs:
-  update-stocks:
+  scrape_and_update_sheets:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Check out repository
-      uses: actions/checkout@v3
-  
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v2
       with:
-        python-version: 3.12
-  
+        python-version: '3.12'
+
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
-        pip install selenium beautifulsoup4 requests gspread google-auth google-auth-oauthlib google-api-python-client
+        pip install requests gspread google-auth google-auth-oauthlib google-api-python-client
 
-    - name: Run StockTwits Scraper
-    env:
-      GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
-      run: python stocktwits_scraper.py 1
+    - name: Run stock scraping and update Google Sheets
+      env:
+        GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
+      run: |
+        python stocktwits_scraper.py  1

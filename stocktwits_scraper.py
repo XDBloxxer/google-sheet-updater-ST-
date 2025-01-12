@@ -90,30 +90,43 @@ def extract():
     
     return trending_stocks  # Return the trending stocks data
 
-# Function to populate Google Sheets with trending stocks
 def populate_google_sheet(trending_stocks):
     if not trending_stocks:
         print("No data to populate in the Google Sheet.")
         return
-    
-    print("Populating Google Sheet with trending stocks...")
-    
-    # Prepare the data to insert
-    sheet_data = []
-    for stock in trending_stocks:
-        symbol = stock.get('symbol', 'N/A')  # Use 'N/A' if symbol is missing
-        name = stock.get('name', 'N/A')      # Use 'N/A' if name is missing
-        sheet_data.append([symbol, name])
 
-    # Debugging: Print data to check
-    print(f"Sheet data to insert: {sheet_data}")
+    print("Starting to populate Google Sheet...")
     
     try:
-        # Write the data to the sheet, starting from row 2 (to keep headers intact)
+        # Debug: Verify Google Sheet access
+        print(f"Accessing Google Sheet: {sheet.title}")
+        
+        # Prepare data to insert
+        sheet_data = []
+        for stock in trending_stocks:
+            symbol = stock.get('symbol', 'N/A')
+            name = stock.get('name', 'N/A')
+            sheet_data.append([symbol, name])
+
+        print(f"Prepared data for insertion: {sheet_data}")
+        
+        if not sheet_data:
+            print("No data to write to the sheet. Exiting.")
+            return
+
+        # Debug: Clear the sheet before inserting (optional)
+        print("Clearing the sheet...")
+        sheet.clear()
+        print("Sheet cleared.")
+
+        # Insert the data
+        print("Inserting data into the sheet...")
         sheet.insert_rows(sheet_data, row=2)
-        print(f"Populated 'Trending Stocks' sheet with {len(sheet_data)} entries.")
+        print(f"Successfully populated the sheet with {len(sheet_data)} rows.")
+
     except Exception as e:
-        print(f"Error occurred while populating the Google Sheet: {e}")
+        print(f"Error in populating Google Sheet: {e}")
+
 
 # Main function to handle scraping and Google Sheets update
 def main():

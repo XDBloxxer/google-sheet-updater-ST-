@@ -79,7 +79,7 @@ def extract():
                     })
 
             # Debugging: Check if we have any trending stocks
-            print(f"Trending stocks data: {trending_stocks}")
+            #print(f"Trending stocks data: {trending_stocks}")
                 
             # Save the response JSON to a file
             with open(f"{name}.json", "w") as jsonFile:

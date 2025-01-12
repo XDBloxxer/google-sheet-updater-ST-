@@ -83,10 +83,10 @@ def extract():
                 
             # Save the response JSON to a file
             #with open(f"{name}.json", "w") as jsonFile:
-                json.dump(responseJson, jsonFile, indent=4)
-                print(f"Saved data to {name}.json")
+                #json.dump(responseJson, jsonFile, indent=4)
+                #print(f"Saved data to {name}.json")
         #else:
-            print(f"Failed to fetch data for {name}, status code: {response.status_code}")
+            #print(f"Failed to fetch data for {name}, status code: {response.status_code}")
     
     return trending_stocks  # Return the trending stocks data
 

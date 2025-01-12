@@ -76,7 +76,8 @@ def extract():
                 url = "https://api.stocktwits.com/api/2/symbols/stats/top_losers.json?regions=US"
                 name = "topLosers"
             case 3:
-                url = "https://api-gw-prd.stocktwits.com/rankings/api/v1/rankings?identifier=US&amp;identifier-type=exchange-set&amp;limit=15&amp;page-num=1&amp;type=ts"
+                # Corrected URL for trending stocks
+                url = "https://api.stocktwits.com/api/2/streams/trending.json?limit=15"
                 name = "trending"
         
         headers = {"User-Agent": "Mozilla/5.0"}
@@ -105,8 +106,6 @@ def extract():
         extract()  # Restart the process
     else:
         print("Exiting...")
-
-
 
 # Main entry point of the script
 if __name__ == "__main__":

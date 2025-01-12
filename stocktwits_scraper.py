@@ -1,8 +1,13 @@
+import os
+import gspread
 import requests
 import json
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from google.oauth2.service_account import Credentials
+import time
+from apscheduler.schedulers.background import BackgroundScheduler
 
 # Function to scrape earnings data
 def earnings():
@@ -107,6 +112,58 @@ def extract():
     else:
         print("Exiting...")
 
-# Main entry point of the script
+# Set up Google Sheets API credentials
+SCOPE = [
+    "https://spreadsheets.google.com/feeds",
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/drive.file",
+    "https://www.googleapis.com/auth/drive"
+]
+
+# Load the Google credentials from the environment variable
+GOOGLE_CREDENTIALS_JSON = os.getenv("GOOGLE_CREDENTIALS_JSON")
+
+if GOOGLE_CREDENTIALS_JSON is None:
+    raise ValueError("GOOGLE_CREDENTIALS_JSON environment variable is not set.")
+
+# Create credentials from the JSON string
+creds = Credentials.from_service_account_info(json.loads(GOOGLE_CREDENTIALS_JSON), scopes=SCOPE)
+
+# Authorize the Google Sheets client
+client = gspread.authorize(creds)
+
+# Open the Google Sheet
+SPREADSHEET_NAME = 'Flux Capacitor'
+sheet = client.open(SPREADSHEET_NAME).worksheet("Trending Stocks")
+
+def populate_google_sheet(trending_stocks):
+    # Authenticate with Google Sheets API
+    gc = authenticate_google_sheets()
+    
+    # Open the Google Sheets file and the 'Trending Stocks' sheet
+    sheet = gc.open("Flux Capacitor").worksheet("Trending Stocks")
+    
+    # Prepare the data to insert
+    sheet_data = []
+    for stock in trending_stocks:
+        symbol = stock.get('symbol', 'N/A')  # Use 'N/A' if symbol is missing
+        name = stock.get('name', 'N/A')      # Use 'N/A' if name is missing
+        sheet_data.append([symbol, name])
+    
+    # Write the data to the sheet, starting from row 2 (to keep headers intact)
+    sheet.insert_rows(sheet_data, row=2)
+    print(f"Populated 'Trending Stocks' sheet with {len(sheet_data)} entries.")
+
+def main():
+    # Get trending stocks data
+    trending_stocks = get_trending_stocks()
+
+    # Populate the Google Sheets with trending stocks data
+    if trending_stocks:
+        populate_google_sheet(trending_stocks)
+    else:
+        print("No trending stocks data found.")
+
+# Entry point of the script
 if __name__ == "__main__":
-    extract()
+    main()

@@ -7,7 +7,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from google.oauth2.service_account import Credentials
 import time
-from apscheduler.schedulers.background import BackgroundScheduler
+
 
 # Function to scrape earnings data
 def earnings():

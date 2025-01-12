@@ -5,8 +5,6 @@ from google.auth import exceptions
 from google.auth.transport.requests import Request
 from google.oauth2.service_account import Credentials
 from google.auth import impersonated_credentials
-from io import BytesIO
-from google.colab import auth
 
 # Function to authenticate Google Sheets API using credentials from GitHub secrets
 def authenticate_google_sheets():

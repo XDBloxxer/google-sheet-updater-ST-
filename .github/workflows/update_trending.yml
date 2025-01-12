@@ -22,7 +22,8 @@ jobs:
     - name: Install dependencies
       run: |
         pip install requests gspread google-auth google-auth-oauthlib google-api-python-client
-
+        pip install selenium beautifulsoup4
+        
     - name: Run stock scraping and update Google Sheets
       env:
         GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}

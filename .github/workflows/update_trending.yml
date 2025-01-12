@@ -25,4 +25,4 @@ jobs:
       env:
         GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}  # Set up in GitHub secrets
       run: |
-        python stocktwits_to_sheets.py
+        python stocktwits_to_sheets.py 1

@@ -25,9 +25,15 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y chromium-browser chromium-chromedriver
-        # Check if chromedriver already exists, remove it if it does
+        # Check if chromedriver already exists and remove it
         if [ -f /usr/bin/chromedriver ]; then
+          echo "Removing existing chromedriver at /usr/bin/chromedriver"
           sudo rm /usr/bin/chromedriver
+        fi
+        # Check if the chromedriver binary exists in the expected location
+        if [ ! -f /usr/lib/chromium-browser/chromedriver ]; then
+          echo "Error: chromedriver not found at /usr/lib/chromium-browser/chromedriver"
+          exit 1
         fi
         # Create the symbolic link for chromedriver
         sudo ln -s /usr/lib/chromium-browser/chromedriver /usr/bin/chromedriver
@@ -37,9 +43,14 @@ jobs:
   
     - name: Debug Chromedriver Path
       run: |
+        # Print locations of chromium-browser and chromedriver
+        echo "Checking chromedriver and chromium-browser paths"
         which chromium-browser
         which chromedriver
+        # List the chromedriver binary location
         ls -l /usr/bin/chromedriver
+        # Check the location of chromedriver inside the Chromium directory
+        ls -l /usr/lib/chromium-browser/
   
     - name: Run StockTwits Scraper
       run: python stocktwits_scraper.py 1

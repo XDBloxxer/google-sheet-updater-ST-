@@ -35,16 +35,17 @@ def update_google_sheet(data):
         values = [["Rank", "Symbol", "Company Name", "Price"]]
         
         # Add data rows
-        if "response" in data and "ranks" in data["response"]:
-            for rank_data in data["response"]["ranks"]:
-                stock = rank_data.get("stock", {})
-                pricing = rank_data.get("pricing", {})
-                values.append([
-                    rank_data.get("rank", ""),
-                    stock.get("symbol", ""),
-                    stock.get("name", ""),
-                    pricing.get("price", "")
-                ])
+        for page_data in data:
+            if "response" in page_data and "ranks" in page_data["response"]:
+                for rank_data in page_data["response"]["ranks"]:
+                    stock = rank_data.get("stock", {})
+                    pricing = rank_data.get("pricing", {})
+                    values.append([
+                        rank_data.get("rank", ""),
+                        stock.get("symbol", ""),
+                        stock.get("name", ""),
+                        pricing.get("price", "")
+                    ])
         
         body = {
             'values': values
@@ -53,7 +54,7 @@ def update_google_sheet(data):
         # Clear existing content and update with new data
         service.spreadsheets().values().clear(
             spreadsheetId=spreadsheet_id,
-            range="Trending Stocks!A:D"  # Changed from A:F to A:D since we removed 2 columns
+            range="Trending Stocks!A:D"
         ).execute()
         
         result = service.spreadsheets().values().update(
@@ -71,41 +72,35 @@ def update_google_sheet(data):
         return False
 
 def extract():
-    print("Fetching all trending stocks...")
-    base_url = (
-        "https://api-gw-prd.stocktwits.com/rankings/api/v1/rankings?"
-        "identifier=ALL&identifier-type=exchange-set&limit=100&page-num={page}&type=ts"
-    )
+    base_url = "https://api-gw-prd.stocktwits.com/rankings/api/v1/rankings"
     headers = {"User-Agent": "Mozilla/5.0"}
+    
+    all_data = []
+    max_pages = 5  # Fetch data from pages 1 to 5
 
-    all_trending_stocks = []
-    page = 1  # Start with the first page
-
-    while True:
-        print(f"Fetching page {page}...")
-        response = requests.get(base_url.format(page=page), headers=headers)
+    print("Fetching trending stocks data...")
+    for page_num in range(1, max_pages + 1):
+        url = f"{base_url}?identifier=ALL&identifier-type=exchange-set&limit=100&page-num={page_num}&type=ts"
+        response = requests.get(url, headers=headers)
         
-        if response.status_code != 200:
-            print(f"Failed to fetch data from page {page}, status code: {response.status_code}")
+        if response.status_code == 200:
+            data = response.json()
+            all_data.append(data)
+            print(f"Fetched data for page {page_num}")
+        else:
+            print(f"Failed to fetch data for page {page_num}, status code: {response.status_code}")
             break
-
-        try:
-            response_json = response.json()
-            rows = response_json.get("data", {}).get("rows", [])
-            if not rows:
-                print(f"No more data on page {page}. Stopping.")
-                break
-            
-            print(f"Fetched {len(rows)} stocks from page {page}.")
-            all_trending_stocks.extend(rows)  # Add the current page's data to the full list
-            page += 1  # Move to the next page
-
-        except Exception as e:
-            print(f"Error parsing JSON response from page {page}: {e}")
-            break
-
-    print(f"Total stocks fetched: {len(all_trending_stocks)}")
-    return all_trending_stocks
+    
+    # Save all pages' data to a local JSON file
+    with open("trending.json", "w") as jsonFile:
+        json.dump(all_data, jsonFile, indent=4)
+        print("Saved data to trending.json")
+    
+    # Update Google Sheet
+    if update_google_sheet(all_data):
+        print("Successfully updated Google Sheet 'Flux Capacitor'")
+    else:
+        print("Failed to update Google Sheet")
 
 if __name__ == "__main__":
     extract()

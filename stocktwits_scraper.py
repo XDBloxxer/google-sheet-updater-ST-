@@ -41,7 +41,7 @@ def scrape_trending_stocks():
     
     # Find all trending stocks (you may need to adjust this part based on StockTwits structure)
     trending_stocks = []
-    stock_elements = soup.find_all('a', {'class': 'trending-stocks__ticker'})  # Adjust class or tag based on actual structure
+    stock_elements = soup.find_all('a', {'class': 'Rankings_tabContent__AnwWp py-3 min-h-[675px]'})  # Adjust class or tag based on actual structure
     
     for element in stock_elements:
         stock_symbol = element.text.strip()

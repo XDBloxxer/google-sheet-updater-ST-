@@ -14,7 +14,7 @@ def earnings():
     chrome = webdriver.Chrome(options=options)
 
     # Go to the earnings calendar page
-    chrome.get("https://stocktwits.com/markets/calendar")
+    chrome.get("https://stocktwits.com/rankings")
     
     # Get the page source (HTML content)
     htmlContent = chrome.page_source
@@ -77,7 +77,7 @@ def extract():
                 name = "topLosers"
             case 3:
                 # Corrected URL for trending stocks
-                url = "https://api.stocktwits.com/api/2/rankings/trending.json?limit=15"
+                url = "https://api.stocktwits.com/api/2/streams/trending.json?limit=15"
                 name = "trending"
         
         headers = {"User-Agent": "Mozilla/5.0"}

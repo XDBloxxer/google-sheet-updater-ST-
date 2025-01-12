@@ -21,19 +21,22 @@ def get_trending_stocks():
     url = "https://stocktwits.com/trending"
     driver.get(url)
     
-    # Wait for a specific element to load (helps with JavaScript rendering)
+    # Increase wait time to handle slow loading of content
     try:
-        # Adjust the waiting strategy based on what element is reliably loaded first
-        WebDriverWait(driver, 10).until(
+        # Wait for a specific element to load (helps with JavaScript rendering)
+        WebDriverWait(driver, 20).until(
             EC.presence_of_element_located((By.CLASS_NAME, "symbol"))
         )
     except Exception as e:
         print(f"Error waiting for page to load: {e}")
+        # Print the page source for debugging purposes
+        print("Page source for debugging:")
+        print(driver.page_source)
         driver.quit()
         return []
     
     # Give it some extra time in case some additional content loads asynchronously
-    time.sleep(2)
+    time.sleep(3)
     
     # Get the page source (HTML)
     page_source = driver.page_source

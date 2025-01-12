@@ -1,76 +1,55 @@
-import os
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
-import requests
-from bs4 import BeautifulSoup
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
 import time
+import chromedriver_autoinstaller
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
 
-# Environment variable for Google Credentials (already set in your environment)
-GOOGLE_CREDENTIALS_JSON = os.getenv("GOOGLE_CREDENTIALS_JSON")
-
-# Define the Google Sheets authorization function
-def authenticate_google_sheets():
-    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    creds = ServiceAccountCredentials.from_json_keyfile_name(GOOGLE_CREDENTIALS_JSON, scope)
-    client = gspread.authorize(creds)
-    return client
-
-# Scrape the Stocktwits Trending Stocks (using BeautifulSoup and Selenium as needed)
 def get_trending_stocks():
-    url = "https://www.stocktwits.com/"
+    # Automatically install the required version of chromedriver
+    chromedriver_autoinstaller.install()
 
-    options = webdriver.ChromeOptions()
-    options.add_argument("--headless")  # Run in headless mode (without opening browser)
-    options.add_argument("--disable-extensions")
-    options.add_argument("--disable-gpu")
-    
-    # Initialize WebDriver with the ChromeDriverManager
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
-    
+    # Setup options for headless browsing (no GUI)
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")  # Uncomment this if running headless
+
+    # Initialize WebDriver
+    driver = webdriver.Chrome(options=chrome_options)
+
+    # Define the URL for StockTwits sentiment page
+    url = "https://stocktwits.com/sentiment"
+
+    # Open the page with Selenium
     driver.get(url)
-    time.sleep(5)  # Wait for page to load
 
-    # Grab the page source after it has loaded
-    page_source = driver.page_source
-    driver.quit()
+    # Wait for the page to fully load
+    time.sleep(5)
 
-    # Parse the page source with BeautifulSoup
-    soup = BeautifulSoup(page_source, 'html.parser')
+    # Extract the trending stocks (adjust the selector if necessary)
     trending_stocks = []
 
-    # This is where you extract the actual trending stocks data
-    # This may require you to inspect the HTML structure to grab the right tags/classes
-    for stock in soup.find_all('a', {'class': 'st_symbol'}):  # Adjust the class based on actual HTML
-        trending_stocks.append(stock.text.strip())
+    try:
+        # Find elements containing the stock symbols
+        stock_elements = driver.find_elements(By.CSS_SELECTOR, "span.symbol")
+        
+        # Loop through the found elements and extract text (tickers)
+        for stock in stock_elements:
+            trending_stocks.append(stock.text)
+    except Exception as e:
+        print(f"Error while scraping: {e}")
+    
+    # Close the WebDriver after scraping
+    driver.quit()
 
-    if not trending_stocks:
-        print("No trending stocks found.")
-    return trending_stocks
-
-# Main function to orchestrate the process
-def main():
-    # Authenticate Google Sheets
-    client = authenticate_google_sheets()
-
-    # Open the specific sheet by its name
-    sheet = client.open("Flux Capacitor").worksheet("Trending Stocks")
-
-    # Get the trending stocks data
-    trending_stocks = get_trending_stocks()
-
+    # Return the list of trending stocks
     if trending_stocks:
-        # Clear the existing data
-        sheet.clear()
-
-        # Write the new data into the sheet
-        for i, stock in enumerate(trending_stocks, start=1):
-            sheet.update_cell(i, 1, stock)
-        print(f"Updated the sheet with {len(trending_stocks)} trending stocks.")
+        return trending_stocks
     else:
-        print("No new trending stocks to update.")
+        print("No trending stocks found.")
+        return None
 
 if __name__ == "__main__":
-    main()
+    stocks = get_trending_stocks()
+    if stocks:
+        print("Trending Stocks:", stocks)
+    else:
+        print("No trending stocks found.")

@@ -77,7 +77,7 @@ def extract():
                 name = "topLosers"
             case 3:
                 # Corrected URL for trending stocks
-                url = "https://api-gw-prd.stocktwits.com/rankings/api/v1/rankings?identifier=US&amp;identifier-type=exchange-set&amp;limit=15&amp;page-num=1&amp;type=ts"
+                url = "https://api.stocktwits.com/api/2/rankings/trending.json?limit=15"
                 name = "trending"
         
         headers = {"User-Agent": "Mozilla/5.0"}

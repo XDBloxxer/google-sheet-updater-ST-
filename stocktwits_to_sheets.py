@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 
 # Function to get trending stocks from StockTwits
 def get_trending_stocks():
-    url = "https://stocktwits.com/trending"  # Trending page URL
+    url = "https://stocktwits.com/sentiment"  # Trending page URL
     
     # Send HTTP request to get the page content
     print(f"Requesting: {url}")

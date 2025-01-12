@@ -4,44 +4,25 @@ on:
   workflow_dispatch: # Allows manual trigger
 
 jobs:
-  update-sheet:
+  update-stocks:
     runs-on: ubuntu-latest
-
+    
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+    - name: Checkout repository
+      uses: actions/checkout@v2
+    
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.12'  # Specify the Python version to use
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install requests gspread oauth2client
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.12"
-          
-      - name: Install required packages for headless chrome
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            wget \
-            curl \
-            unzip \
-            libxss1 \
-            libappindicator3-1 \
-            libgdk-pixbuf2.0-0 \
-            libnss3 \
-            libgbm1 \
-            libatk-bridge2.0-0 \
-            libatk1.0-0 \
-            libx11-xcb1 \
-            libsecret-1-0 \
-            libxcomposite1 \
-            libxrandr2 \
-            libasound2
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install gspread google-auth requests beautifulsoup4 selenium webdriver-manager
-
-      - name: Run update script
-        env:
-          GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
-        run: python stocktwits_to_sheets.py
+    - name: Run stocktwits to sheets script
+      env:
+        GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}  # Set up in GitHub secrets
+      run: |
+        python flux_capacitor_to_sheets.py

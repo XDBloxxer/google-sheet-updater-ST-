@@ -32,7 +32,7 @@ def update_google_sheet(data):
         
         # Prepare the data for Google Sheets
         # First row is headers
-        values = [["Rank", "Symbol", "Company Name", "Price", "Price Change %", "Watchers"]]
+        values = [["Rank", "Symbol", "Company Name", "Price"]]
         
         # Add data rows
         if "response" in data and "ranks" in data["response"]:
@@ -43,9 +43,7 @@ def update_google_sheet(data):
                     rank_data.get("rank", ""),
                     stock.get("symbol", ""),
                     stock.get("name", ""),
-                    pricing.get("price", ""),
-                    pricing.get("percentage_price_change", ""),
-                    rank_data.get("watcher_count", "")
+                    pricing.get("price", "")
                 ])
         
         body = {
@@ -55,7 +53,7 @@ def update_google_sheet(data):
         # Clear existing content and update with new data
         service.spreadsheets().values().clear(
             spreadsheetId=spreadsheet_id,
-            range="Trending Stocks!A:F"
+            range="Trending Stocks!A:D"  # Changed from A:F to A:D since we removed 2 columns
         ).execute()
         
         result = service.spreadsheets().values().update(

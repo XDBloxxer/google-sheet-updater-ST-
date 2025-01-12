@@ -71,7 +71,7 @@ def update_google_sheet(data):
         return False
 
 def extract():
-    url = "https://api-gw-prd.stocktwits.com/rankings/api/v1/rankings?identifier=ALL&identifier-type=exchange-set&limit=500&page-num=1&type=ts"
+    url = "https://api-gw-prd.stocktwits.com/rankings/api/v1/rankings?identifier=ALL&identifier-type=exchange-set&limit=100&page-num=2&type=ts"
     headers = {"User-Agent": "Mozilla/5.0"}
     
     print("Fetching trending stocks data...")

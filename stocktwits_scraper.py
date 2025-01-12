@@ -80,7 +80,7 @@ def extract():
 
     print("Fetching trending stocks data...")
     for page_num in range(1, max_pages + 1):
-        url = f"{base_url}?identifier=ALL&identifier-type=exchange-set&limit=100&page-num={page_num}&type=ts"
+        url = f"{base_url}?identifier=ALL&identifier-type=exchange-set&limit=105&page-num={page_num}&type=ts"
         response = requests.get(url, headers=headers)
         
         if response.status_code == 200:

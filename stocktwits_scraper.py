@@ -48,16 +48,26 @@ def earnings():
     chrome.quit()
 
 # Function to extract data based on user input
+import requests
+import json
+
+def earnings():
+    # Placeholder for earnings scraping logic
+    # For now, we'll just print a message that it's being executed
+    print("Earnings function executed (this would scrape earnings information).")
+    # You can add your scraping logic here for earnings if needed.
+
 def extract():
-    # Ask user what data they want to scrape
-    query = "3"
-    # If the user selects earnings, call the earnings() function
+    # Directly setting query value (no input needed)
+    query = "3"  # Example: scrape trending stocks (set manually)
+    
+    print("Starting the scraping process...")
+    
     if query == "4":
         earnings()
     elif query == "0":
         return
     else:
-        # Define the URLs for the other options (top gainers, top losers, trending stocks)
         match int(query):
             case 1:
                 url = "https://api.stocktwits.com/api/2/symbols/stats/top_gainers.json?regions=US"
@@ -68,24 +78,35 @@ def extract():
             case 3:
                 url = "https://api-gw-prd.stocktwits.com/rankings/api/v1/rankings?identifier=US&amp;identifier-type=exchange-set&amp;limit=15&amp;page-num=1&amp;type=ts"
                 name = "trending"
-
-        # Send a GET request to the selected URL
+        
         headers = {"User-Agent": "Mozilla/5.0"}
+        print(f"Fetching data from {url}...")
         response = requests.get(url, headers=headers)
         
-        # Parse the response as JSON
-        responseJson = json.loads(response.text)
+        if response.status_code == 200:
+            print(f"Successfully fetched data for {name}.")
+            responseJson = response.json()
 
-        # Save the data as a JSON file
-        with open(f"{name}.json", "w") as jsonFile:
-            json.dump(responseJson, jsonFile, indent=4)
+            # Output the raw data for verification
+            print(f"Data for {name}:")
+            print(json.dumps(responseJson, indent=4))
 
-    # Ask if the user wants to continue
-    more = "no"
+            # Save the response JSON to a file
+            with open(f"{name}.json", "w") as jsonFile:
+                json.dump(responseJson, jsonFile, indent=4)
+                print(f"Saved data to {name}.json")
+        else:
+            print(f"Failed to fetch data for {name}, status code: {response.status_code}")
+    
+    # Simulate "Do you want to continue?" prompt, automatically choosing "no"
+    more = "no"  # Simulating that user doesn't want to continue
+
     if more.lower() == "yes":
-        extract()
+        extract()  # Restart the process
     else:
-        return
+        print("Exiting...")
+
+
 
 # Main entry point of the script
 if __name__ == "__main__":

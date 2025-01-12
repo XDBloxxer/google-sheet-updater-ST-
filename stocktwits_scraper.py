@@ -3,110 +3,92 @@ import json
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+import os
+import google.oauth2.service_account as service_account
+from googleapiclient.discovery import build
+from datetime import datetime
 
-# Function to scrape earnings data
-def earnings():
-    # Set up headless Chrome to avoid opening the browser window
-    options = webdriver.ChromeOptions()
-    options.add_argument("--headless")
+def get_google_credentials():
+    """Get Google credentials from GitHub secrets."""
+    credentials_json = os.environ.get('GOOGLE_CREDENTIALS_JSON')
+    if not credentials_json:
+        raise ValueError("Google credentials not found in environment variables")
     
-    # Launch Chrome with the options
-    chrome = webdriver.Chrome(options=options)
+    credentials_info = json.loads(credentials_json)
+    credentials = service_account.Credentials.from_service_account_info(
+        credentials_info,
+        scopes=['https://www.googleapis.com/auth/spreadsheets']
+    )
+    return credentials
 
-    # Go to the earnings calendar page
-    chrome.get("https://stocktwits.com/rankings")
+def update_google_sheet(data):
+    """Update Google Sheet with stock data."""
+    try:
+        credentials = get_google_credentials()
+        service = build('sheets', 'v4', credentials=credentials)
+        
+        spreadsheet_id = "1u7ixhoxCwYo-mUm0mod62Rt-IMBTSX4SOhZbIpQ0Tbw"  # You'll need to replace this with your actual spreadsheet ID
+        range_name = "Trending Stocks!A1"  # Starting from A1 in the "Trending Stocks" sheet
+        
+        # Prepare the data for Google Sheets
+        # First row is headers
+        values = [["Symbol", "Company Name", "Date Updated"]]
+        
+        # Add data rows
+        if "data" in data:  # For trending stocks API response
+            for item in data["data"]:
+                values.append([
+                    item.get("symbol", ""),
+                    item.get("title", ""),
+                    datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                ])
+        
+        body = {
+            'values': values
+        }
+        
+        # Clear existing content and update with new data
+        service.spreadsheets().values().clear(
+            spreadsheetId=spreadsheet_id,
+            range="Trending Stocks!A:C"
+        ).execute()
+        
+        result = service.spreadsheets().values().update(
+            spreadsheetId=spreadsheet_id,
+            range=range_name,
+            valueInputOption='RAW',
+            body=body
+        ).execute()
+        
+        print(f"Updated {result.get('updatedCells')} cells in Google Sheets")
+        return True
     
-    # Get the page source (HTML content)
-    htmlContent = chrome.page_source
-
-    # Parse the page with BeautifulSoup
-    soup = BeautifulSoup(htmlContent, "html.parser")
-
-    # Find all earnings rows
-    earnings = soup.find_all("div", {"role": "row"})
-    companyEarnings = []
-
-    # Iterate through the earnings data, skipping the header row
-    for earning in earnings[1:]:
-        company = earning.find_all("p")
-        symbol = company[0].text
-        name = company[1].text
-        price = earning.find("div", {"class": "EarningsTable_priceCell__Sxx1_"}).text
-
-        # Append the extracted data to the list
-        companyEarnings.append({
-            "Symbol": symbol,
-            "Company Name": name,
-            "Price": price
-        })
-
-    # Save the earnings data as a JSON file
-    with open("earnings.json", "w") as earningsFile:
-        json.dump(companyEarnings, earningsFile, indent=4, ensure_ascii=False)
-
-    # Close the Chrome browser instance
-    chrome.quit()
-
-# Function to extract data based on user input
-import requests
-import json
-
-def earnings():
-    # Placeholder for earnings scraping logic
-    # For now, we'll just print a message that it's being executed
-    print("Earnings function executed (this would scrape earnings information).")
-    # You can add your scraping logic here for earnings if needed.
+    except Exception as e:
+        print(f"Error updating Google Sheet: {str(e)}")
+        return False
 
 def extract():
-    # Directly setting query value (no input needed)
-    query = "3"  # Example: scrape trending stocks (set manually)
+    url = "https://api-gw-prd.stocktwits.com/rankings/api/v1/rankings?identifier=ALL&identifier-type=exchange-set&limit=100&page-num=1&type=ts"
+    headers = {"User-Agent": "Mozilla/5.0"}
     
-    print("Starting the scraping process...")
+    print("Fetching trending stocks data...")
+    response = requests.get(url, headers=headers)
     
-    if query == "4":
-        earnings()
-    elif query == "0":
-        return
-    else:
-        match int(query):
-            case 1:
-                url = "https://api.stocktwits.com/api/2/symbols/stats/top_gainers.json?regions=US"
-                name = "topGainers"
-            case 2:
-                url = "https://api.stocktwits.com/api/2/symbols/stats/top_losers.json?regions=US"
-                name = "topLosers"
-            case 3:
-                # Corrected URL for trending stocks
-                url = "https://api-gw-prd.stocktwits.com/rankings/api/v1/rankings?identifier=ALL&identifier-type=exchange-set&limit=100&page-num=1&type=ts"
-                name = "trending"
+    if response.status_code == 200:
+        data = response.json()
         
-        headers = {"User-Agent": "Mozilla/5.0"}
-        print(f"Fetching data from {url}...")
-        response = requests.get(url, headers=headers)
+        # Save to local JSON file
+        with open("trending.json", "w") as jsonFile:
+            json.dump(data, jsonFile, indent=4)
+            print("Saved data to trending.json")
         
-        if response.status_code == 200:
-            print(f"Successfully fetched data for {name}.")
-            responseJson = response.json()
-
-            # Output the raw data for verification
-            print(f"Data for {name}:")
-            print(json.dumps(responseJson, indent=4))
-
-            # Save the response JSON to a file
-            with open(f"{name}.json", "w") as jsonFile:
-                json.dump(responseJson, jsonFile, indent=4)
-                print(f"Saved data to {name}.json")
+        # Update Google Sheet
+        if update_google_sheet(data):
+            print("Successfully updated Google Sheet 'Flux Capacitor'")
         else:
-            print(f"Failed to fetch data for {name}, status code: {response.status_code}")
-    
-    # Simulate "Do you want to continue?" prompt, automatically choosing "no"
-    more = "no"  # Simulating that user doesn't want to continue
-
-    if more.lower() == "yes":
-        extract()  # Restart the process
+            print("Failed to update Google Sheet")
     else:
-        print("Exiting...")
+        print(f"Failed to fetch data, status code: {response.status_code}")
 
-# Main entry point of the script
 if __name__ == "__main__":
     extract()

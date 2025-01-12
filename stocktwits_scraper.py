@@ -77,24 +77,24 @@ def scrape_earnings():
         driver.quit()
         return []
 
+import sys
+
 def main():
+    print("Script is starting.")
+    # Check if the argument is correct
     if len(sys.argv) < 2:
-        print("Usage: python stocktwits_scraper.py <1|2>")
-        print("1: Scrape Trending Stocks")
-        print("2: Scrape Earnings Calendar")
-        sys.exit(1)
-
-    choice = sys.argv[1]
-
-    if choice == "1":
-        stocks = scrape_trending_stocks()
-        print(json.dumps(stocks, indent=4))
-    elif choice == "2":
-        earnings = scrape_earnings()
-        print(json.dumps(earnings, indent=4))
+        print("Error: Please provide a valid argument.")
+        return
+    print(f"Argument passed: {sys.argv[1]}")
+    
+    if sys.argv[1] == "1":
+        print("Scraping trending stocks...")
+        # Call the function for scraping trending stocks
+        scrape_trending_stocks()
     else:
-        print("Invalid choice. Use '1' for Trending Stocks or '2' for Earnings Calendar.")
-        sys.exit(1)
+        print("Invalid argument. Please pass 1.")
+    
+    print("Script has finished.")
 
 if __name__ == "__main__":
-    scrape_trending_stocks()
+    main()

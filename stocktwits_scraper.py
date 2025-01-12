@@ -50,8 +50,7 @@ def earnings():
 # Function to extract data based on user input
 def extract():
     # Ask user what data they want to scrape
-    query = input("What to scrape? \n top-gainers [1]\n top-losers[2]\n trending stocks[3]\n stocks which reported earnings today[4]\n Insert a number (1,2,3, or 4)\n To cancel, enter 0: ")
-
+    query = "3"
     # If the user selects earnings, call the earnings() function
     if query == "4":
         earnings()

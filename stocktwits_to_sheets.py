@@ -16,7 +16,7 @@ def get_trending_stocks():
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
     
     # URL for StockTwits trending page
-    url = "https://stocktwits.com/trending"
+    url = "https://stocktwits.com/sentiment"
     driver.get(url)
     
     # Give it some time to load (important for dynamically loaded content)

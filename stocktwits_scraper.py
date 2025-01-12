@@ -1,11 +1,11 @@
 import requests
+import os
 import json
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import gspread
 from google.oauth2.service_account import Credentials
-import os
 
 # Set up Google Sheets API credentials
 SCOPE = [

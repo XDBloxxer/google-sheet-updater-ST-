@@ -7,14 +7,20 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 
 def configure_driver():
+    from selenium import webdriver
+    from selenium.webdriver.chrome.service import Service
+    from selenium.webdriver.chrome.options import Options
+
     options = Options()
     options.add_argument("--headless")
     options.add_argument("--disable-gpu")
     options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    driver_service = Service("/path/to/chromedriver")  # Replace with the actual path to chromedriver
+
+    # Use the path configured in the workflow
+    driver_service = Service("/usr/bin/chromedriver")
     driver = webdriver.Chrome(service=driver_service, options=options)
     return driver
+
 
 def scrape_trending_stocks():
     url = "https://stocktwits.com/sentiment"
